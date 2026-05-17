@@ -1,0 +1,303 @@
+Silver Layer Transformation Documentation
+Project Overview
+
+The Silver Layer was created to clean, standardize, enrich, and validate raw e-commerce data coming from the Bronze Layer.
+This layer prepares the data for analytics, reporting, dashboarding, and future Gold Layer modeling.
+
+The main objectives of the Silver Layer are:
+
+Improve data quality
+Remove inconsistencies
+Standardize formats
+Create business-ready columns
+Preserve analytical value
+Handle missing and duplicate records properly
+1. Customer Table
+Table Name
+
+silver.olist_customers
+
+Source
+
+bronze.olist_customers
+
+Transformations Performed
+Data Cleaning
+Removed unnecessary leading and trailing spaces from customer-related fields.
+Standardized customer state values into uppercase format.
+Data Validation
+Removed records with missing customer IDs because customer_id is the primary business identifier.
+Business Purpose
+
+This table is used for:
+
+Customer segmentation
+Regional customer analysis
+Order-to-customer relationship mapping
+Geographic reporting
+2. Product Table
+Table Name
+
+silver.olist_products
+
+Sources
+bronze.olist_products
+bronze.product_category
+Transformations Performed
+Data Cleaning
+Removed unnecessary spaces from product fields.
+Replaced missing product category names with “unknown”.
+Data Enrichment
+Added English translation for product categories.
+Used category translation table to improve reporting readability.
+Join Logic
+Used LEFT JOIN to preserve all products even if category translation is unavailable.
+Data Validation
+Removed records with missing product IDs.
+Business Purpose
+
+This table is used for:
+
+Product analytics
+Category performance analysis
+Inventory insights
+Product-based sales reporting
+3. Orders Table
+Table Name
+
+silver.olist_orders
+
+Source
+
+bronze.olist_orders
+
+Transformations Performed
+Data Cleaning
+Removed unwanted spaces from order-related fields.
+Preserved important NULL values for incomplete orders.
+Derived Columns Created
+Approval Time Hours
+
+Calculated the time difference between purchase time and approval time.
+
+Purpose:
+
+Measures operational efficiency
+Identifies approval delays
+Delivery Days
+
+Calculated actual delivery duration from purchase to customer delivery.
+
+Purpose:
+
+Logistics performance analysis
+Delivery efficiency tracking
+Estimated Delivery Days
+
+Calculated expected delivery duration promised to customers.
+
+Purpose:
+
+SLA comparison
+Delivery expectation analysis
+Is Delayed
+
+Created delivery status indicator:
+
+1 = delayed delivery
+0 = delivered on time
+NULL = order not delivered yet
+
+Purpose:
+
+Delay analysis
+Logistics KPI reporting
+Data Validation
+Removed records with missing order IDs.
+Business Purpose
+
+This table is used for:
+
+Order lifecycle analysis
+Delivery performance monitoring
+Customer fulfillment tracking
+Operational analytics
+4. Order Items Table
+Table Name
+
+silver.olist_order_items
+
+Source
+
+bronze.olist_order_items
+
+Transformations Performed
+Data Cleaning
+Removed unwanted spaces from IDs.
+Data Type Improvements
+Converted monetary values into fixed decimal format for financial accuracy.
+Converted shipping limit timestamp into date format.
+Derived Columns Created
+Total Order Item Value
+
+Calculated:
+Product Price + Freight Value
+
+Purpose:
+
+Accurate item-level revenue analysis
+Shipping cost contribution analysis
+Profitability insights
+Data Validation
+Removed records with missing order IDs.
+Business Purpose
+
+This table is used for:
+
+Revenue analysis
+Freight cost analysis
+Seller-product relationships
+Item-level sales analytics
+5. Order Payments Table
+Table Name
+
+silver.olist_order_payments
+
+Source
+
+bronze.olist_order_payments
+
+Transformations Performed
+Data Cleaning
+Removed unnecessary spaces from payment fields.
+Data Type Improvements
+Converted payment values into fixed decimal format.
+Derived Columns Created
+Is Installment Payment
+
+Created payment behavior indicator:
+
+1 = installment payment
+0 = single payment
+
+Purpose:
+
+Customer payment behavior analysis
+Installment usage reporting
+Payment Types Preserved
+
+Original payment methods were preserved, including:
+
+Credit Card
+Debit Card
+Voucher
+Boleto
+Not Defined
+Data Validation
+Removed records with missing order IDs.
+Business Purpose
+
+This table is used for:
+
+Payment behavior analysis
+Revenue tracking
+Installment analysis
+Payment method reporting
+6. Order Reviews Table
+Table Name
+
+silver.olist_order_reviews
+
+Source
+
+bronze.olist_order_reviews
+
+Transformations Performed
+Data Cleaning
+Removed unwanted spaces from review fields.
+Duplicate Handling
+Removed duplicate review records.
+Preserved only one occurrence of duplicated review IDs.
+Text Preservation
+Original Portuguese review text was preserved.
+Translation was intentionally avoided to preserve original customer meaning.
+Derived Columns Created
+Review Sentiment
+
+Created sentiment classification:
+
+Positive
+Neutral
+Negative
+
+Based on review score values.
+
+Purpose:
+
+Customer satisfaction analysis
+Sentiment reporting
+Review quality tracking
+Data Type Improvements
+Converted review creation timestamp into date format where required.
+Data Validation
+Removed records with missing review IDs.
+Business Purpose
+
+This table is used for:
+
+Customer satisfaction analytics
+Review sentiment analysis
+Product/service quality insights
+7. Sellers Table
+Table Name
+
+silver.olist_sellers
+
+Source
+
+bronze.olist_sellers
+
+Transformations Performed
+Data Cleaning
+Removed unnecessary spaces from seller fields.
+Standardized seller state values into uppercase format.
+Invalid Data Handling
+Detected invalid city values containing numeric characters.
+Replaced invalid city names with “unknown”.
+
+Reason:
+Some rows contained ZIP-code-like values instead of actual city names.
+
+Data Preservation
+Seller records were preserved even when city information was invalid.
+Data Validation
+Removed records with missing seller IDs.
+Business Purpose
+
+This table is used for:
+
+Seller performance analysis
+Regional seller analytics
+Marketplace operational insights
+Geographic seller reporting
+Silver Layer Summary
+Major Improvements Achieved
+Data Quality
+Removed duplicates
+Standardized text formatting
+Fixed inconsistent values
+Handled invalid records
+Business Enrichment
+
+Created analytical columns such as:
+
+Delivery KPIs
+Delay indicators
+Sentiment classification
+Installment indicators
+Revenue calculations
+Financial Accuracy
+Converted monetary fields to fixed decimal datatype.
+Data Consistency
+Standardized states and text formatting.
+Preserved NULLs where business meaning was important.
