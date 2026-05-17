@@ -1,0 +1,846 @@
+# Olist Data Warehouse Project
+
+## Bronze and Silver Layer Data Quality Validation Framework
+
+---
+
+# Overview
+
+This document contains the complete Data Quality Validation Framework used during the development of the Olist Data Warehouse project.
+
+The objective of these validation scripts is to ensure that data loaded into the Bronze and Silver layers is:
+
+* Accurate
+* Consistent
+* Standardized
+* Reliable for analytics
+* Free from duplicates and invalid records
+
+These checks were performed before and after transformations to validate the integrity of the ETL process.
+
+---
+
+# Validation Strategy
+
+The validation process was divided into the following categories:
+
+| Validation Type           | Purpose                                |
+| ------------------------- | -------------------------------------- |
+| NULL Checks               | Detect missing critical values         |
+| Duplicate Checks          | Ensure entity uniqueness               |
+| Blank Value Checks        | Detect empty string issues             |
+| Standardization Checks    | Validate formatting consistency        |
+| Business Rule Validation  | Ensure business logic correctness      |
+| Range Validation          | Detect impossible or invalid values    |
+| Date Validation           | Verify chronological consistency       |
+| Derived Metric Validation | Validate calculated analytical columns |
+
+---
+
+# ====================================================================
+
+# 1. CUSTOMER DATA QUALITY VALIDATION
+
+# Table: silver.olist_customers
+
+# ====================================================================
+
+## Business Objective
+
+The customer dimension is critical for customer segmentation, regional analysis,
+and order tracking. These checks ensure customer records are clean,
+unique, and standardized.
+
+---
+
+## 1.1 Check for Duplicate or NULL customer_id
+
+### Purpose
+
+* Ensures each customer record is unique
+* Prevents duplicate customer dimension entries
+* Validates primary key integrity
+
+### Expected Result
+
+No rows returned
+
+```sql
+SELECT
+    customer_id,
+    COUNT(*)
+FROM silver.olist_customers
+GROUP BY customer_id
+HAVING COUNT(*) > 1
+    OR customer_id IS NULL;
+```
+
+---
+
+## 1.2 Check for NULL customer_unique_id
+
+### Purpose
+
+Validates that every customer has a valid business identifier.
+
+### Expected Result
+
+No rows returned
+
+```sql
+SELECT
+    *
+FROM silver.olist_customers
+WHERE customer_unique_id IS NULL;
+```
+
+---
+
+## 1.3 Check for Blank Values
+
+### Purpose
+
+Detects empty strings that may bypass NULL validations.
+
+### Expected Result
+
+No rows returned
+
+```sql
+SELECT
+    *
+FROM silver.olist_customers
+WHERE customer_id = ''
+    OR customer_unique_id = ''
+    OR customer_city = ''
+    OR customer_state = '';
+```
+
+---
+
+## 1.4 Check for Unwanted Spaces in customer_city
+
+### Purpose
+
+Ensures city names are properly standardized and trimmed.
+
+### Expected Result
+
+No rows returned
+
+```sql
+SELECT
+    customer_city
+FROM silver.olist_customers
+WHERE customer_city != TRIM(customer_city);
+```
+
+---
+
+## 1.5 Check for Unwanted Spaces in customer_state
+
+### Purpose
+
+Validates state values are standardized without leading or trailing spaces.
+
+### Expected Result
+
+No rows returned
+
+```sql
+SELECT
+    customer_state
+FROM silver.olist_customers
+WHERE customer_state != TRIM(customer_state);
+```
+
+---
+
+## 1.6 Check ZIP Code Validity
+
+### Purpose
+
+Ensures ZIP code prefixes contain valid positive numeric values.
+
+### Expected Result
+
+No rows returned
+
+```sql
+SELECT
+    *
+FROM silver.olist_customers
+WHERE customer_zip_code_prefix <= 0;
+```
+
+---
+
+## 1.7 Validate State Code Length Consistency
+
+### Purpose
+
+Brazilian state abbreviations should contain exactly 2 characters.
+
+### Expected Result
+
+All lengths should equal 2
+
+```sql
+SELECT DISTINCT
+    LEN(customer_state) AS state_length
+FROM silver.olist_customers;
+```
+
+---
+
+## 1.8 Customer City Standardization Review
+
+### Purpose
+
+Manually review city naming consistency.
+
+### Example Issues
+
+* Upper/lower case inconsistencies
+* Spelling variations
+* Encoding problems
+
+```sql
+SELECT DISTINCT
+    customer_city
+FROM silver.olist_customers
+ORDER BY customer_city;
+```
+
+---
+
+## 1.9 Customer State Standardization Review
+
+### Purpose
+
+Validate state code consistency.
+
+```sql
+SELECT DISTINCT
+    customer_state
+FROM silver.olist_customers
+ORDER BY customer_state;
+```
+
+---
+
+# ====================================================================
+
+# 2. PRODUCT DATA QUALITY VALIDATION
+
+# Table: bronze.olist_products
+
+# ====================================================================
+
+## Business Objective
+
+Product data validation ensures accurate inventory analytics,
+category analysis, and product performance reporting.
+
+---
+
+## 2.1 Check for Duplicate or NULL product_id
+
+### Purpose
+
+Ensures each product has a unique identifier.
+
+### Expected Result
+
+No rows returned
+
+```sql
+SELECT
+    product_id,
+    COUNT(*)
+FROM bronze.olist_products
+GROUP BY product_id
+HAVING COUNT(*) > 1
+    OR product_id IS NULL;
+```
+
+---
+
+## 2.2 Product NULL Distribution Analysis
+
+### Purpose
+
+Measures completeness of product attributes.
+
+### Business Importance
+
+Helps identify missing metadata that could impact analytics.
+
+```sql
+SELECT
+    COUNT(*) - COUNT(product_id) AS product_id_nulls,
+    COUNT(*) - COUNT(product_category_name) AS category_nulls,
+    COUNT(*) - COUNT(product_name_lenght) AS name_length_nulls,
+    COUNT(*) - COUNT(product_description_lenght) AS description_length_nulls,
+    COUNT(*) - COUNT(product_photos_qty) AS photos_qty_nulls,
+    COUNT(*) - COUNT(product_weight_g) AS weight_nulls,
+    COUNT(*) - COUNT(product_length_cm) AS length_nulls,
+    COUNT(*) - COUNT(product_height_cm) AS height_nulls,
+    COUNT(*) - COUNT(product_width_cm) AS width_nulls
+FROM bronze.olist_products;
+```
+
+---
+
+# ====================================================================
+
+# 3. ORDER DATA QUALITY VALIDATION
+
+# Table: bronze.olist_orders
+
+# ====================================================================
+
+## Business Objective
+
+Order data is the core transactional dataset used for sales,
+delivery, operational, and customer experience analytics.
+
+---
+
+## 3.1 Check NULL Counts Across Order Fields
+
+### Purpose
+
+Identifies missing transactional and delivery lifecycle data.
+
+### Business Importance
+
+Missing timestamps directly impact SLA and logistics analysis.
+
+```sql
+SELECT
+    COUNT(*) - COUNT(order_id) AS order_id_nulls,
+    COUNT(*) - COUNT(customer_id) AS customer_id_nulls,
+    COUNT(*) - COUNT(order_status) AS order_status_nulls,
+    COUNT(*) - COUNT(order_purchase_timestamp) AS purchase_timestamp_nulls,
+    COUNT(*) - COUNT(order_approved_at) AS approved_at_nulls,
+    COUNT(*) - COUNT(order_delivered_carrier_date) AS carrier_date_nulls,
+    COUNT(*) - COUNT(order_delivered_customer_date) AS delivered_date_nulls,
+    COUNT(*) - COUNT(order_estimated_delivery_date) AS estimated_delivery_nulls
+FROM bronze.olist_orders;
+```
+
+---
+
+## 3.2 Analyze NULL Dates by order_status
+
+### Purpose
+
+Determines whether missing dates are valid based on order lifecycle stage.
+
+### Example
+
+Cancelled orders may naturally contain NULL delivery timestamps.
+
+```sql
+SELECT
+    order_status,
+    COUNT(*) AS total_orders
+FROM bronze.olist_orders
+WHERE order_approved_at IS NULL
+   OR order_delivered_carrier_date IS NULL
+   OR order_delivered_customer_date IS NULL
+GROUP BY order_status
+ORDER BY total_orders DESC;
+```
+
+---
+
+# ====================================================================
+
+# 4. ORDER ITEMS DATA QUALITY VALIDATION
+
+# Table: bronze.olist_order_items
+
+# ====================================================================
+
+## Business Objective
+
+Order item validation ensures accurate revenue,
+shipping, and product-level sales analysis.
+
+---
+
+## 4.1 Check NULL Values
+
+### Purpose
+
+Detects incomplete transactional records.
+
+```sql
+SELECT
+    SUM(CASE WHEN order_id IS NULL THEN 1 ELSE 0 END) AS order_id_nulls,
+    SUM(CASE WHEN order_item_id IS NULL THEN 1 ELSE 0 END) AS order_item_id_nulls,
+    SUM(CASE WHEN product_id IS NULL THEN 1 ELSE 0 END) AS product_id_nulls,
+    SUM(CASE WHEN seller_id IS NULL THEN 1 ELSE 0 END) AS seller_id_nulls,
+    SUM(CASE WHEN shipping_limit_date IS NULL THEN 1 ELSE 0 END) AS shipping_limit_date_nulls,
+    SUM(CASE WHEN price IS NULL THEN 1 ELSE 0 END) AS price_nulls,
+    SUM(CASE WHEN freight_value IS NULL THEN 1 ELSE 0 END) AS freight_value_nulls
+FROM bronze.olist_order_items;
+```
+
+---
+
+## 4.2 Check Duplicate Order Items
+
+### Purpose
+
+Ensures uniqueness of order item combinations.
+
+### Expected Result
+
+No rows returned
+
+```sql
+SELECT
+    order_id,
+    order_item_id,
+    COUNT(*) AS duplicate_count
+FROM bronze.olist_order_items
+GROUP BY
+    order_id,
+    order_item_id
+HAVING COUNT(*) > 1;
+```
+
+---
+
+## 4.3 Detect Negative Monetary Values
+
+### Purpose
+
+Validates pricing integrity.
+
+### Expected Result
+
+No rows returned
+
+```sql
+SELECT *
+FROM bronze.olist_order_items
+WHERE price < 0
+   OR freight_value < 0;
+```
+
+---
+
+## 4.4 Detect Zero Price Orders
+
+### Purpose
+
+Identifies potential promotional, test,
+or corrupted transactions.
+
+```sql
+SELECT *
+FROM bronze.olist_order_items
+WHERE price = 0;
+```
+
+---
+
+# ====================================================================
+
+# 5. ORDER PAYMENTS DATA QUALITY VALIDATION
+
+# Table: bronze.olist_order_payments
+
+# ====================================================================
+
+## Business Objective
+
+Payment data validation ensures accurate financial reporting
+and payment method analysis.
+
+---
+
+## 5.1 Check NULL Values
+
+```sql
+SELECT
+    SUM(CASE WHEN order_id IS NULL THEN 1 ELSE 0 END) AS order_id_nulls,
+    SUM(CASE WHEN payment_sequential IS NULL THEN 1 ELSE 0 END) AS payment_sequential_nulls,
+    SUM(CASE WHEN payment_type IS NULL THEN 1 ELSE 0 END) AS payment_type_nulls,
+    SUM(CASE WHEN payment_installments IS NULL THEN 1 ELSE 0 END) AS payment_installments_nulls,
+    SUM(CASE WHEN payment_value IS NULL THEN 1 ELSE 0 END) AS payment_value_nulls
+FROM bronze.olist_order_payments;
+```
+
+---
+
+## 5.2 Check Duplicate Payments
+
+### Purpose
+
+Ensures payment sequence uniqueness.
+
+```sql
+SELECT
+    order_id,
+    payment_sequential,
+    COUNT(*) AS duplicate_count
+FROM bronze.olist_order_payments
+GROUP BY
+    order_id,
+    payment_sequential
+HAVING COUNT(*) > 1;
+```
+
+---
+
+## 5.3 Validate Payment Types
+
+### Purpose
+
+Review payment method standardization.
+
+```sql
+SELECT DISTINCT payment_type
+FROM bronze.olist_order_payments
+ORDER BY payment_type;
+```
+
+---
+
+## 5.4 Detect Negative Payment Values
+
+### Purpose
+
+Ensures financial values remain valid.
+
+```sql
+SELECT *
+FROM bronze.olist_order_payments
+WHERE payment_value < 0;
+```
+
+---
+
+## 5.5 Validate Installment Values
+
+### Purpose
+
+Installment counts should always be positive.
+
+```sql
+SELECT *
+FROM bronze.olist_order_payments
+WHERE payment_installments <= 0;
+```
+
+---
+
+## 5.6 Analyze Undefined Payment Types
+
+### Purpose
+
+Measures unknown or unclassified payment records.
+
+```sql
+SELECT COUNT(*) AS not_defined_count
+FROM bronze.olist_order_payments
+WHERE payment_type = 'not_defined';
+```
+
+---
+
+# ====================================================================
+
+# 6. ORDER REVIEW DATA QUALITY VALIDATION
+
+# Table: bronze.olist_order_reviews
+
+# ====================================================================
+
+## Business Objective
+
+Review validation supports customer satisfaction,
+NPS analysis, and sentiment reporting.
+
+---
+
+## 6.1 Check NULL Values
+
+```sql
+SELECT
+    SUM(CASE WHEN review_id IS NULL THEN 1 ELSE 0 END) AS review_id_nulls,
+    SUM(CASE WHEN order_id IS NULL THEN 1 ELSE 0 END) AS order_id_nulls,
+    SUM(CASE WHEN review_score IS NULL THEN 1 ELSE 0 END) AS review_score_nulls,
+    SUM(CASE WHEN review_comment_title IS NULL THEN 1 ELSE 0 END) AS review_title_nulls,
+    SUM(CASE WHEN review_comment_message IS NULL THEN 1 ELSE 0 END) AS review_message_nulls,
+    SUM(CASE WHEN review_creation_date IS NULL THEN 1 ELSE 0 END) AS review_creation_nulls,
+    SUM(CASE WHEN review_answer_timestamp IS NULL THEN 1 ELSE 0 END) AS review_answer_nulls
+FROM bronze.olist_order_reviews;
+```
+
+---
+
+## 6.2 Check Duplicate Reviews
+
+### Purpose
+
+Ensures review uniqueness.
+
+```sql
+SELECT
+    review_id,
+    COUNT(*) AS duplicate_count
+FROM bronze.olist_order_reviews
+GROUP BY review_id
+HAVING COUNT(*) > 1;
+```
+
+---
+
+## 6.3 Validate Review Score Range
+
+### Purpose
+
+Review score should remain within valid rating range.
+
+```sql
+SELECT DISTINCT review_score
+FROM bronze.olist_order_reviews
+ORDER BY review_score;
+```
+
+---
+
+## 6.4 Detect Empty Review Messages
+
+### Purpose
+
+Identifies reviews with missing written feedback.
+
+```sql
+SELECT *
+FROM bronze.olist_order_reviews
+WHERE review_comment_message = '';
+```
+
+---
+
+## 6.5 Validate Review Timeline Consistency
+
+### Purpose
+
+Review responses should not occur before review creation.
+
+### Expected Result
+
+No rows returned
+
+```sql
+SELECT *
+FROM bronze.olist_order_reviews
+WHERE review_answer_timestamp < review_creation_date;
+```
+
+---
+
+## 6.6 Analyze Duplicate Review Records
+
+### Purpose
+
+Further investigation of duplicate review identifiers.
+
+```sql
+SELECT *
+FROM bronze.olist_order_reviews
+WHERE review_id IN (
+
+    SELECT review_id
+    FROM bronze.olist_order_reviews
+    GROUP BY review_id
+    HAVING COUNT(*) > 1
+)
+ORDER BY review_id;
+```
+
+---
+
+# ====================================================================
+
+# 7. SELLER DATA QUALITY VALIDATION
+
+# Table: bronze.olist_sellers
+
+# ====================================================================
+
+## Business Objective
+
+Seller validation ensures accurate marketplace,
+regional, and supplier analytics.
+
+---
+
+## 7.1 Check NULL Values
+
+```sql
+SELECT
+    SUM(CASE WHEN seller_id IS NULL THEN 1 ELSE 0 END) AS seller_id_nulls,
+    SUM(CASE WHEN seller_zip_code_prefix IS NULL THEN 1 ELSE 0 END) AS zip_nulls,
+    SUM(CASE WHEN seller_city IS NULL THEN 1 ELSE 0 END) AS city_nulls,
+    SUM(CASE WHEN seller_state IS NULL THEN 1 ELSE 0 END) AS state_nulls
+FROM bronze.olist_sellers;
+```
+
+---
+
+## 7.2 Check Duplicate seller_id
+
+### Purpose
+
+Ensures seller entity uniqueness.
+
+```sql
+SELECT
+    seller_id,
+    COUNT(*) AS duplicate_count
+FROM bronze.olist_sellers
+GROUP BY seller_id
+HAVING COUNT(*) > 1;
+```
+
+---
+
+## 7.3 Seller City Standardization Review
+
+### Purpose
+
+Manual review of seller city formatting consistency.
+
+```sql
+SELECT DISTINCT seller_city
+FROM bronze.olist_sellers
+ORDER BY seller_city;
+```
+
+---
+
+# ====================================================================
+
+# 8. SILVER LAYER DERIVED METRIC VALIDATION
+
+# Table: silver.olist_orders
+
+# ====================================================================
+
+## Business Objective
+
+The Silver layer introduces derived analytical metrics
+used for logistics and SLA performance analysis.
+
+---
+
+## 8.1 approval_time_hours
+
+### Formula
+
+```sql
+DATEDIFF(HOUR, order_purchase_timestamp, order_approved_at)
+```
+
+### Business Meaning
+
+Measures how quickly orders are approved after purchase.
+
+### Analytical Use Cases
+
+* Seller operational efficiency
+* Order processing bottlenecks
+* Internal workflow analysis
+
+---
+
+## 8.2 delivery_days
+
+### Formula
+
+```sql
+DATEDIFF(DAY, order_purchase_timestamp, order_delivered_customer_date)
+```
+
+### Business Meaning
+
+Measures total customer delivery time.
+
+### Analytical Use Cases
+
+* Delivery performance
+* Logistics optimization
+* Customer experience analysis
+
+---
+
+## 8.3 estimated_delivery_days
+
+### Formula
+
+```sql
+DATEDIFF(DAY, order_purchase_timestamp, order_estimated_delivery_date)
+```
+
+### Business Meaning
+
+Represents promised delivery timeline communicated to customers.
+
+### Analytical Use Cases
+
+* SLA analysis
+* Promise vs actual comparison
+* Delivery expectation management
+
+---
+
+## 8.4 is_delayed
+
+### Formula
+
+```sql
+CASE
+    WHEN order_delivered_customer_date > order_estimated_delivery_date THEN 1
+    ELSE 0
+END
+```
+
+### Business Meaning
+
+Indicates whether delivery exceeded the promised delivery date.
+
+### Analytical Use Cases
+
+* SLA breach analysis
+* Delay tracking
+* Logistics KPI monitoring
+
+---
+
+# ====================================================================
+
+# Final Outcome
+
+# ====================================================================
+
+The data quality framework successfully validated:
+
+* Primary key uniqueness
+* NULL handling consistency
+* Data standardization
+* Financial integrity
+* Delivery lifecycle accuracy
+* Timeline consistency
+* Business rule compliance
+* Derived metric reliability
+
+This validation process ensured that the Silver layer became analytics-ready and suitable for downstream Gold layer reporting and dashboard creation.
