@@ -11,7 +11,7 @@ Designed as a portfolio project, it showcases practical skills in data engineeri
 
 The data architecture for this project follows Medallion Architecture using **Bronze**, **Silver**, and **Gold** layers:
 
-![Data Architecture](docs/data_architecture.png)
+![Data Architecture](document/data_flow_olist.png)
 
 1. **Bronze Layer**: Stores raw data directly imported from CSV files into SQL Server without transformations.
 2. **Silver Layer**: Includes data cleaning, standardization, normalization, and transformation processes.
