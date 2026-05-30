@@ -276,16 +276,20 @@ Then in the screenshots section simply add:
 ## 📸 Dashboard Screenshots
 
 ### Executive Overview
-![Executive Overview](Power_BI_report/Images/Screenshot 2026-05-31 024500.png)
+
+![Executive Overview](Power_BI_report/Images/executive_overview.png)
 
 ### Customer Analysis
-![Customer Analysis](images/customer_analysis.png)
+
+![Customer Analysis](Power_BI_report/Images/customer_analysis.png)
 
 ### Product Performance
-![Product Analysis](images/product_analysis.png)
+
+![Product Performance](Power_BI_report/Images/product_analysis.png)
 
 ### Logistics & Delivery
-![Logistics Analysis](images/logistics_analysis.png)
+
+![Logistics & Delivery](Power_BI_report/Images/logistics_analysis.png)
 
 This keeps the README concise while still showing recruiters that you built:
 
