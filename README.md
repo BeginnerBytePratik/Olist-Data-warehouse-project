@@ -227,118 +227,67 @@ Window Functions Used:
 * Automated data quality monitoring
 
 ---
-📊 Power BI Analytics Solution
+📊 Power BI Dashboard
 
-The Gold Layer was connected to Power BI to develop an interactive business intelligence solution for stakeholders. The dashboards were designed to provide insights into revenue performance, customer behavior, product profitability, and delivery operations.
+The Gold Layer was connected to Power BI to create an interactive analytics solution focused on business performance, customer behavior, product profitability, and delivery operations.
 
-Dashboard Features
-Interactive slicers and filters
-KPI scorecards
-Drill-through analysis
-Time intelligence calculations
-Dynamic measures using DAX
-Trend analysis
-Cross-filtering and interactive reporting
-DAX Measures Implemented
+Features
+KPI Cards
+DAX Measures
+Drillthrough Analysis
+Time Intelligence
+Interactive Slicers & Filters
+Dynamic Reporting
+Key Measures
 Revenue
 Net Profit
 Profit Margin %
 Total Orders
 Total Customers
-Delayed Orders
 Delay Rate %
 Average Review Score
-Average Revenue per Customer
-Monthly Revenue
-Previous Month Revenue
-Monthly Orders
-Monthly Delayed Orders
-📈 Dashboard Pages
-1. Executive Overview
-
-Provides a high-level summary of business performance and operational health.
-
-Key KPIs
-Total Revenue
-Total Orders
-Net Profit
-Delay Rate %
-Insights
-Revenue trends over time
-State-wise sales performance
-Product category contribution
-Monthly performance tracking
-2. Customer Analysis
-
-Focuses on customer behavior, purchasing patterns, and customer satisfaction.
-
-Key Metrics
-Total Customers
 Revenue per Customer
-Average Review Score
-Payment Method Distribution
-Insights
-Customer geographic distribution
-Revenue contribution by customer segment
-Payment behavior analysis
-Customer satisfaction trends
-3. Product Performance Analysis
-
-Evaluates product category performance and profitability.
-
-Key Metrics
-Revenue by Category
-Profit Margin %
-Orders by Category
-Delayed Orders by Category
-Features
-Product Drillthrough Page
-Dynamic KPI Analysis
-Monthly Performance Tracking
-Insights
-Best-performing product categories
-Category profitability analysis
-Product sales trends
-Product-level operational performance
-4. Logistics & Delivery Analysis
-
-Analyzes shipping performance and operational efficiency.
-
-Key Metrics
-Average Shipping Cost
-Average Product Weight
-Delay Rate %
-Profit Margin %
-Insights
-Relationship between product weight and shipping cost
-Delivery delay patterns
-Product weight category analysis
-Logistics impact on profitability
-📸 Dashboard Screenshots
+📈 Dashboard Pages
 Executive Overview
-
+Revenue, Orders, Profit & Delay KPIs
+Revenue Trends
+State Performance Analysis
 Customer Analysis
-
-Product Performance Analysis
-
-Logistics & Delivery Analysis
-
-Then add this section near the end, before Future Improvements:
-
+Customer Distribution
+Revenue per Customer
+Payment & Review Analysis
+Product Performance
+Product Category Analysis
+Profitability Tracking
+Product Drillthrough
+Logistics & Delivery
+Shipping Cost Analysis
+Weight vs Delay Analysis
+Operational Performance Insights
 📌 Key Business Insights
-Revenue Performance
-Generated over R$16M in total revenue.
-Revenue trends revealed seasonal fluctuations and growth opportunities.
-Customer Insights
-Credit cards were the dominant payment method.
+Generated over R$16M in revenue from 98K+ orders.
+Credit cards were the most used payment method.
+Product categories showed significant differences in profitability.
+Heavier products incurred higher shipping costs and delay rates.
 Customer review scores remained largely positive.
-Product Insights
-Product categories contributed differently to revenue and profitability.
-Certain categories generated high revenue but lower margins.
-Logistics Insights
-Heavier products incurred higher shipping costs.
-Delay rates increased for heavier product categories.
-Logistics performance directly impacted profitability.
+
+Then in the screenshots section simply add:
+
+## 📸 Dashboard Screenshots
+
+### Executive Overview
+![Executive Overview](images/executive_overview.png)
+
+### Customer Analysis
+![Customer Analysis](images/customer_analysis.png)
+
+### Product Performance
+![Product Analysis](images/product_analysis.png)
+
+### Logistics & Delivery
+![Logistics Analysis](images/logistics_analysis.png)
+
+This keeps the README concise while still showing recruiters that you built:
 
 ## 🛡️ License
 
