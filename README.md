@@ -276,7 +276,7 @@ Then in the screenshots section simply add:
 ## 📸 Dashboard Screenshots
 
 ### Executive Overview
-![Executive Overview](images/executive_overview.png)
+![Executive Overview](Power_BI_report/Images/Screenshot 2026-05-31 024500.png)
 
 ### Customer Analysis
 ![Customer Analysis](images/customer_analysis.png)
