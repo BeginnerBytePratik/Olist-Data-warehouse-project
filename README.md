@@ -291,7 +291,7 @@ Then in the screenshots section simply add:
 
 ![Logistics & Delivery](Power_BI_report/Images/logistics_analysis.png)
 
-This keeps the README concise while still showing recruiters that you built:
+
 
 ## 🛡️ License
 
